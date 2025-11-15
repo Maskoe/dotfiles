@@ -6,6 +6,17 @@
 vim.keymap.set("v", "ii", "2<Up>", { noremap = true })
 vim.keymap.set("v", "q", 'i"', { noremap = true })
 
+-- Hide bottom window, whatever it is
+vim.keymap.set("n", "<leader>wb", "<C-w>j<C-w>c", { desc = "Close bottom window" })
+
+-- Execute only the query under the cursor by default
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "sql", "dbui" },
+  callback = function()
+    vim.keymap.set("n", "<leader>S", "vap<Plug>(DBUI_ExecuteQuery)", { buffer = true })
+  end,
+})
+
 for _, cool in ipairs({ "n", "v" }) do
   vim.keymap.set(cool, "i", "<Up>", { noremap = true, silent = true })
   vim.keymap.set(cool, "k", "<Down>", { noremap = true, silent = true })
