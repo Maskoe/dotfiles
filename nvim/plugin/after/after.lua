@@ -1,0 +1,15 @@
+-- Remove the LazyVim LSP hover mapping
+-- This function will run for every buffer LSP attaches to
+-- vim.api.nvim_create_autocmd("LspAttach", {
+--   callback = function(args)
+--     local buf = args.buf
+--     vim.print("attching or whatever")
+--
+--     vim.lsp.inlay_hint.enable(false, {})
+--     -- Remap K to 7 lines down in this buffer
+--     vim.keymap.set("n", "K", "7<Down>", { noremap = true, silent = true, buffer = buf })
+--
+--     -- Optional: map hover to gh instead
+--     vim.keymap.set("n", "gh", vim.lsp.buf.hover, { noremap = true, silent = true, buffer = buf })
+--   end,
+-- })

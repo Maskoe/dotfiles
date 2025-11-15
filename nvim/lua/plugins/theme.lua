@@ -1,0 +1,1 @@
+/home/mirco/.config/omarchy/current/theme/neovim.lua

@@ -1,0 +1,46 @@
+in neovim with lazyvim, how do i make it so that bg-red-700 will be treated as one word
+-----
+You need to configure Neovim to treat hyphens as part of word characters. Add this to your LazyVim config:
+
+```lua
+vim.opt.iskeyword:append("-")
+```
+
+This modifies the `iskeyword` option to include hyphens, so `bg-red-700` will be treated as a single word for operations like `w`, `b`, `*`, `ciw`, etc.
+
+You can add this to your `~/.config/nvim/lua/config/options.lua` file in LazyVim.
+-------
+hmm i guess i can also just get used to doing dW instead of dw
+-----
+Yes, exactly. `dW` uses WORD motion which treats whitespace-separated sequences as single units, so `bg-red-700` would be deleted entirely with `dW`.
+
+The difference:
+- `dw` - deletes a word (stops at hyphens, dots, etc.)
+- `dW` - deletes a WORD (only stops at whitespace)
+
+Same applies to other motions: `cW`, `yW`, `*W` isn't a thing but `g*` works on partial matches. Using `dW`/`cW` is often more practical for code with hyphens, dots, or other punctuation.
+-------
+i added some keymaps to my keymaps.lua. How can i make nvim refresh? i dont wanna quit out of my real project
+-----
+You can reload your keymaps configuration with:
+
+```
+:luafile ~/.config/nvim/lua/config/keymaps.lua
+```
+
+Or if you're in LazyVim, you can use:
+
+```
+:source ~/.config/nvim/lua/config/keymaps.lua
+```
+
+Alternatively, restart just the Lua state without closing buffers:
+
+```
+:LspRestart
+:lua package.loaded['config.keymaps'] = nil
+:lua require('config.keymaps')
+```
+
+The first approach is usually the simplest for reloading keymaps.
+-------

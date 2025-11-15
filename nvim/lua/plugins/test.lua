@@ -1,0 +1,1303 @@
+return {}
+-- local M = {}
+--
+-- -- Store chat state
+-- local chat_buf = nil
+-- local chat_win = nil
+-- local conv_id = "default"
+-- local exePath = "/home/mirco/projects/lua-test/lua/bin/Debug/net9.0/lua"
+-- local chat_history = {}
+-- local current_assistant_message = ""
+--
+-- local function populate_chat_buffer(history)
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return
+--   end
+--
+--   local content = {
+--     "# AI Chat",
+--   }
+--
+--   for i, message in ipairs(history) do
+--     if message.role == "user" then
+--       table.insert(content, "---")
+--
+--       -- Split user message by newlines and add each line
+--       local message_lines = vim.split(message.content, "\n")
+--       for _, line in ipairs(message_lines) do
+--         table.insert(content, line)
+--       end
+--     elseif message.role == "assistant" then
+--       table.insert(content, "")
+--       table.insert(content, "**🤖 Clanker:**")
+--
+--       -- Split AI response by newlines and add each line
+--       local response_lines = vim.split(message.content, "\n")
+--       for _, line in ipairs(response_lines) do
+--         table.insert(content, line)
+--       end
+--     end
+--   end
+--
+--   -- Add final separator for new messages
+--   table.insert(content, "---")
+--   table.insert(content, "")
+--
+--   -- Replace buffer content
+--   vim.api.nvim_buf_set_lines(chat_buf, 0, -1, false, content)
+--
+--   -- Scroll to bottom
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     local line_count = vim.api.nvim_buf_line_count(chat_buf)
+--     vim.api.nvim_win_set_cursor(chat_win, { line_count, 0 })
+--   end
+-- end
+--
+-- local function handle_ai_response(chunk)
+--   current_assistant_message = current_assistant_message .. chunk
+--
+--   -- Update the last assistant message in history
+--   if #chat_history > 0 and chat_history[#chat_history].role == "assistant" then
+--     chat_history[#chat_history].content = current_assistant_message
+--   else
+--     table.insert(chat_history, {
+--       role = "assistant",
+--       content = current_assistant_message,
+--     })
+--   end
+--
+--   -- Redraw entire buffer
+--   populate_chat_buffer(chat_history)
+-- end
+--
+-- local function load_conversation_history()
+--   vim.fn.jobstart({ exePath, "load", conv_id }, {
+--     stdout_buffered = true,
+--     on_stdout = function(_, data, _)
+--       if data and #data > 0 and data[1] ~= "" then
+--         local json_str = table.concat(data, "")
+--         local ok, history = pcall(vim.fn.json_decode, json_str)
+--         if ok and history then
+--           chat_history = history
+--           populate_chat_buffer(history)
+--         end
+--       end
+--     end,
+--   })
+-- end
+--
+-- local function create_chat_window()
+--   -- Create buffer if it doesn't exist
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     chat_buf = vim.api.nvim_create_buf(false, true)
+--     vim.api.nvim_buf_set_option(chat_buf, "buftype", "nofile")
+--     vim.api.nvim_buf_set_option(chat_buf, "swapfile", false)
+--     vim.api.nvim_buf_set_option(chat_buf, "modified", false)
+--     vim.api.nvim_buf_set_name(chat_buf, "AI Chat")
+--     vim.api.nvim_buf_set_option(chat_buf, "filetype", "markdown")
+--     vim.api.nvim_buf_set_option(chat_buf, "wrap", true)
+--
+--     -- Load existing conversation history
+--     load_conversation_history()
+--   end
+--
+--   -- Window dimensions
+--   local width = math.floor(vim.o.columns * 0.8)
+--   local height = math.floor(vim.o.lines * 0.8)
+--
+--   -- Create floating window
+--   chat_win = vim.api.nvim_open_win(chat_buf, true, {
+--     relative = "editor",
+--     width = width,
+--     height = height,
+--     row = math.floor((vim.o.lines - height) / 2),
+--     col = math.floor((vim.o.columns - width) / 2),
+--     style = "minimal",
+--     border = "rounded",
+--     title = " AI Chat ",
+--   })
+--
+--   -- Set window-specific wrap option
+--   vim.api.nvim_win_set_option(chat_win, "wrap", true)
+--   vim.api.nvim_win_set_option(chat_win, "linebreak", true)
+--
+--   -- Set up keymaps for the chat window
+--   local opts = { buffer = chat_buf, silent = true }
+--   vim.keymap.set("n", "q", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--   vim.keymap.set("n", "<Esc>", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--
+--   vim.keymap.set("n", "<C-CR>", M.send_to_ai, opts)
+--   vim.keymap.set("i", "<C-CR>", function()
+--     vim.cmd("stopinsert")
+--     M.send_to_ai()
+--   end, opts)
+--
+--   -- Go to end of buffer in insert mode
+--   local line_count = vim.api.nvim_buf_line_count(chat_buf)
+--   vim.api.nvim_win_set_cursor(chat_win, { line_count, 0 })
+--
+--   return chat_buf, chat_win
+-- end
+--
+-- local function get_last_user_message()
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return ""
+--   end
+--
+--   local lines = vim.api.nvim_buf_get_lines(chat_buf, 0, -1, false)
+--   local user_message = {}
+--   local last_separator_index = 0
+--
+--   -- Find the last separator
+--   for i = #lines, 1, -1 do
+--     if lines[i] == "---" then
+--       last_separator_index = i
+--       break
+--     end
+--   end
+--
+--   -- Get everything after the last separator
+--   for i = last_separator_index + 1, #lines do
+--     if lines[i]:match("^%*%*🤖 Clanker:%*%*") then
+--       break -- Stop if we hit an AI response
+--     end
+--     if lines[i] ~= "" or #user_message > 0 then -- Skip leading empty lines
+--       table.insert(user_message, lines[i])
+--     end
+--   end
+--
+--   -- Remove trailing empty lines
+--   while #user_message > 0 and user_message[#user_message] == "" do
+--     table.remove(user_message, #user_message)
+--   end
+--
+--   return table.concat(user_message, "\n")
+-- end
+--
+-- function M.send_to_ai()
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     vim.notify("No chat window open", vim.log.levels.WARN)
+--     return
+--   end
+--
+--   local user_message = get_last_user_message()
+--
+--   if user_message == "" then
+--     vim.notify("No user message found", vim.log.levels.WARN)
+--     return
+--   end
+--
+--   -- Add user message to history
+--   table.insert(chat_history, {
+--     role = "user",
+--     content = user_message,
+--   })
+--
+--   -- Reset current assistant message
+--   current_assistant_message = ""
+--
+--   -- Send message using the msg command
+--   vim.fn.jobstart({ exePath, "msg", conv_id, user_message }, {
+--     stdout_buffered = false,
+--     on_stdout = function(_, data, _)
+--       if data and #data > 0 then
+--         for _, chunk in ipairs(data) do
+--           if chunk ~= "" then
+--             vim.schedule(function()
+--               handle_ai_response(chunk)
+--             end)
+--           end
+--         end
+--       end
+--     end,
+--     on_exit = function()
+--       vim.schedule(function()
+--         current_assistant_message = ""
+--       end)
+--     end,
+--     on_stderr = function(_, data, _)
+--       if data and #data > 0 and data[1] ~= "" then
+--         vim.schedule(function()
+--           vim.notify("AI Error: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
+--         end)
+--       end
+--     end,
+--   })
+-- end
+--
+-- function M.toggle_chat()
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     vim.api.nvim_win_close(chat_win, true)
+--   else
+--     create_chat_window()
+--   end
+-- end
+--
+-- -- Commands
+-- vim.api.nvim_create_user_command("AiSend", M.send_to_ai, {})
+-- vim.api.nvim_create_user_command("AiToggle", M.toggle_chat, {})
+--
+-- -- Keymaps
+-- vim.keymap.set("n", "<leader>at", M.toggle_chat, { desc = "Toggle AI chat" })
+-- vim.keymap.set("n", "<leader>as", M.send_to_ai, { desc = "Send to AI" })
+--
+-- return M
+-- local M = {}
+-- u
+--
+-- -- Store chat state
+-- local chat_buf = nil
+-- local chat_win = nil
+-- local conv_id = "default"
+-- local exePath = "/home/mirco/projects/lua-test/lua/bin/Debug/net9.0/lua"
+-- local chat_history = {}
+-- local current_assistant_message = ""
+--
+-- -- local simpleConcat = ""
+-- -- local function handle_ai_response(chunk)
+-- --   simpleConcat = simpleConcat .. chunk
+-- --   print("simple concat " .. simpleConcat)
+-- -- end
+--
+-- local function handle_ai_response(chunk)
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return
+--   end
+--
+--   -- Get last line
+--   local last_line_num = vim.api.nvim_buf_line_count(chat_buf)
+--   local last_line = vim.api.nvim_buf_get_lines(chat_buf, last_line_num - 1, last_line_num, false)[1] or ""
+--
+--   -- Append chunk to last line
+--   vim.api.nvim_buf_set_lines(chat_buf, last_line_num - 1, last_line_num, false, { last_line .. chunk })
+-- end
+--
+-- local function populate_chat_buffer(history)
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return
+--   end
+--
+--   local content = {
+--     "# AI Chat",
+--   }
+--
+--   for i, message in ipairs(history) do
+--     if message.role == "user" then
+--       table.insert(content, "---")
+--
+--       -- Split user message by newlines and add each line
+--       local message_lines = vim.split(message.content, "\n")
+--       for _, line in ipairs(message_lines) do
+--         table.insert(content, line)
+--       end
+--     elseif message.role == "assistant" then
+--       table.insert(content, "")
+--       table.insert(content, "**🤖 Clanker:**")
+--
+--       -- Split AI response by newlines and add each line
+--       local response_lines = vim.split(message.content, "\n")
+--       for _, line in ipairs(response_lines) do
+--         table.insert(content, line)
+--       end
+--     end
+--   end
+--
+--   -- Add final separator for new messages
+--   table.insert(content, "---")
+--   table.insert(content, "")
+--
+--   -- Replace buffer content
+--   vim.api.nvim_buf_set_lines(chat_buf, 0, -1, false, content)
+--
+--   -- Scroll to bottom
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     local line_count = vim.api.nvim_buf_line_count(chat_buf)
+--     vim.api.nvim_win_set_cursor(chat_win, { line_count, 0 })
+--   end
+-- end
+--
+-- local function load_conversation_history()
+--   vim.fn.jobstart({ exePath, "load", conv_id }, {
+--     stdout_buffered = true,
+--     on_stdout = function(_, data, _)
+--       if data and #data > 0 and data[1] ~= "" then
+--         local json_str = table.concat(data, "")
+--         local ok, history = pcall(vim.fn.json_decode, json_str)
+--         if ok and history then
+--           populate_chat_buffer(history)
+--         end
+--       end
+--     end,
+--   })
+-- end
+--
+-- local function create_chat_window()
+--   -- Create buffer if it doesn't exist
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     chat_buf = vim.api.nvim_create_buf(false, true)
+--     vim.api.nvim_buf_set_option(chat_buf, "buftype", "nofile")
+--     vim.api.nvim_buf_set_option(chat_buf, "swapfile", false)
+--     vim.api.nvim_buf_set_option(chat_buf, "modified", false)
+--     vim.api.nvim_buf_set_name(chat_buf, "AI Chat")
+--     vim.api.nvim_buf_set_option(chat_buf, "filetype", "markdown")
+--     vim.api.nvim_buf_set_option(chat_buf, "wrap", true)
+--
+--     -- Load existing conversation history
+--     load_conversation_history()
+--   end
+--
+--   -- Window dimensions
+--   local width = math.floor(vim.o.columns * 0.8)
+--   local height = math.floor(vim.o.lines * 0.8)
+--
+--   -- Create floating window
+--   chat_win = vim.api.nvim_open_win(chat_buf, true, {
+--     relative = "editor",
+--     width = width,
+--     height = height,
+--     row = math.floor((vim.o.lines - height) / 2),
+--     col = math.floor((vim.o.columns - width) / 2),
+--     style = "minimal",
+--     border = "rounded",
+--     title = " AI Chat ",
+--   })
+--
+--   -- Set window-specific wrap option
+--   vim.api.nvim_win_set_option(chat_win, "wrap", true)
+--   vim.api.nvim_win_set_option(chat_win, "linebreak", true)
+--
+--   -- Set up keymaps for the chat window
+--   local opts = { buffer = chat_buf, silent = true }
+--   vim.keymap.set("n", "q", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--   vim.keymap.set("n", "<Esc>", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--
+--   vim.keymap.set("n", "<C-CR>", M.send_to_ai, opts)
+--   vim.keymap.set("i", "<C-CR>", function()
+--     vim.cmd("stopinsert")
+--     M.send_to_ai()
+--   end, opts)
+--
+--   -- Go to end of buffer in insert mode
+--   local line_count = vim.api.nvim_buf_line_count(chat_buf)
+--   vim.api.nvim_win_set_cursor(chat_win, { line_count, 0 })
+--
+--   return chat_buf, chat_win
+-- end
+--
+-- local function get_last_user_message()
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return ""
+--   end
+--
+--   local lines = vim.api.nvim_buf_get_lines(chat_buf, 0, -1, false)
+--   local user_message = {}
+--   local last_separator_index = 0
+--
+--   -- Find the last separator
+--   for i = #lines, 1, -1 do
+--     if lines[i] == "---" then
+--       last_separator_index = i
+--       break
+--     end
+--   end
+--
+--   -- Get everything after the last separator
+--   for i = last_separator_index + 1, #lines do
+--     if lines[i]:match("^%*%*🤖 Clanker:%*%*") then
+--       break -- Stop if we hit an AI response
+--     end
+--     if lines[i] ~= "" or #user_message > 0 then -- Skip leading empty lines
+--       table.insert(user_message, lines[i])
+--     end
+--   end
+--
+--   -- Remove trailing empty lines
+--   while #user_message > 0 and user_message[#user_message] == "" do
+--     table.remove(user_message, #user_message)
+--   end
+--
+--   return table.concat(user_message, "\n")
+-- end
+--
+-- function M.send_to_ai()
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     vim.notify("No chat window open", vim.log.levels.WARN)
+--     return
+--   end
+--
+--   -- Get only the last user message
+--   local user_message = get_last_user_message()
+--
+--   if user_message == "" then
+--     vim.notify("No user message found", vim.log.levels.WARN)
+--     return
+--   end
+--
+--   -- Add "thinking" indicator
+--   local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--   vim.api.nvim_buf_set_lines(chat_buf, current_lines, current_lines, false, {
+--     "",
+--     "🤖 *Thinking...*",
+--     "",
+--   })
+--
+--   -- Send message using the msg command
+--   vim.fn.jobstart({ exePath, "msg", conv_id, user_message }, {
+--     stdout_buffered = false,
+--     on_stdout = function(_, data, _)
+--       if data and #data > 0 then
+--         -- Process ALL chunks in the data array
+--         for _, chunk in ipairs(data) do
+--           if chunk ~= "" then
+--             vim.schedule(function()
+--               handle_ai_response(chunk)
+--             end)
+--           end
+--         end
+--       end
+--     end,
+--     on_exit = function()
+--       vim.schedule(function()
+--         response_buffer = ""
+--         is_first_chunk = true
+--         last_written_length = 0
+--         if chat_buf and vim.api.nvim_buf_is_valid(chat_buf) then
+--           vim.api.nvim_buf_set_lines(chat_buf, -1, -1, false, {
+--             "---",
+--             "",
+--           })
+--         end
+--       end)
+--     end,
+--     on_stderr = function(_, data, _)
+--       if data and #data > 0 and data[1] ~= "" then
+--         vim.schedule(function()
+--           vim.notify("AI Error: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
+--         end)
+--       end
+--     end,
+--   })
+-- end
+--
+-- function M.toggle_chat()
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     vim.api.nvim_win_close(chat_win, true)
+--   else
+--     create_chat_window()
+--   end
+-- end
+--
+-- -- Commands
+-- vim.api.nvim_create_user_command("AiSend", M.send_to_ai, {})
+-- vim.api.nvim_create_user_command("AiToggle", M.toggle_chat, {})
+--
+-- -- Keymaps
+-- vim.keymap.set("n", "<leader>at", M.toggle_chat, { desc = "Toggle AI chat" })
+-- vim.keymap.set("n", "<leader>as", M.send_to_ai, { desc = "Send to AI" })
+--
+-- return M
+-- local M = {}
+--
+-- -- Store chat state
+-- local chat_buf = nil
+-- local chat_win = nil
+-- local ai_job = nil
+-- local start_time = nil
+-- local send_time = nil
+-- local conv_id = nil
+-- local exePath = "/home/mirco/projects/lua-test/lua/bin/Debug/net9.0/lua"
+--
+-- local function start_ai_process()
+--   if not ai_job or vim.fn.jobwait({ ai_job }, 0)[1] == -1 then
+--     ai_job = vim.fn.jobstart({
+--       -- "dotnet",
+--       -- "run",
+--       -- "--project",
+--       -- "/home/mirco/projects/lua-test/lua/lua.csproj",
+--       exePath,
+--     }, {
+--       stdin = "pipe",
+--       stdout = "pipe",
+--       stderr = "pipe",
+--       on_stdout = function(_, data, _)
+--         if data and #data > 0 and data[1] ~= "" then
+--           vim.schedule(function()
+--             handle_ai_response(table.concat(data, "\n"))
+--           end)
+--         end
+--       end,
+--       on_stderr = function(_, data, _)
+--         if data and #data > 0 and data[1] ~= "" then
+--           vim.schedule(function()
+--             vim.notify("AI Error: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
+--           end)
+--         end
+--       end,
+--       on_exit = function()
+--         ai_job = nil
+--       end,
+--     })
+--   end
+--   return ai_job
+-- end
+--
+-- local function add_separator_and_response(response_lines)
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return
+--   end
+--
+--   local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--   local content = {}
+--
+--   -- Add separator and AI response
+--   table.insert(content, "")
+--   table.insert(content, "**AI Response:**")
+--   table.insert(content, "")
+--
+--   -- Add response
+--   for _, line in ipairs(response_lines) do
+--     table.insert(content, line)
+--   end
+--
+--   -- Add separator for next message
+--   table.insert(content, "")
+--   table.insert(content, "---")
+--   table.insert(content, "")
+--
+--   vim.api.nvim_buf_set_lines(chat_buf, current_lines, current_lines, false, content)
+--
+--   -- Scroll to bottom if window is open
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     local new_line_count = vim.api.nvim_buf_line_count(chat_buf)
+--     vim.api.nvim_win_set_cursor(chat_win, { new_line_count, 0 })
+--   end
+-- end
+--
+-- function handle_ai_response(response)
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return
+--   end
+--
+--   local resTime = vim.loop.hrtime()
+--   print("Got response at", resTime, "elapsed:", (resTime - send_time) / 1e6, "ms")
+--
+--   -- Remove the "thinking" lines
+--   local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--   vim.api.nvim_buf_set_lines(chat_buf, current_lines - 3, current_lines, false, {})
+--
+--   -- Add AI response
+--   local response_lines = vim.split(response, "\n")
+--   if response_lines[#response_lines] == "" then
+--     table.remove(response_lines, #response_lines)
+--   end
+--   add_separator_and_response(response_lines)
+-- end
+--
+-- local function populate_chat_buffer(history)
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return
+--   end
+--
+--   local content = {
+--     "# AI Chat",
+--     "",
+--     "Type your message below, then use <leader>as to send to AI",
+--     "",
+--   }
+--
+--   for i, message in ipairs(history) do
+--     if message.role == "user" then
+--       table.insert(content, "---")
+--       table.insert(content, "")
+--
+--       -- Split user message by newlines and add each line
+--       local message_lines = vim.split(message.content, "\n")
+--       for _, line in ipairs(message_lines) do
+--         table.insert(content, line)
+--       end
+--     elseif message.role == "assistant" then
+--       table.insert(content, "")
+--       table.insert(content, "**AI Response:**")
+--       table.insert(content, "")
+--
+--       -- Split AI response by newlines and add each line
+--       local response_lines = vim.split(message.content, "\n")
+--       for _, line in ipairs(response_lines) do
+--         table.insert(content, line)
+--       end
+--     end
+--   end
+--
+--   -- Add final separator for new messages
+--   table.insert(content, "")
+--   table.insert(content, "---")
+--   table.insert(content, "")
+--
+--   -- Replace buffer content
+--   vim.api.nvim_buf_set_lines(chat_buf, 0, -1, false, content)
+--
+--   -- Scroll to bottom
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     local line_count = vim.api.nvim_buf_line_count(chat_buf)
+--     vim.api.nvim_win_set_cursor(chat_win, { line_count, 0 })
+--   end
+-- end
+--
+-- local function load_conversation_history(conv_id)
+--   local job_id = vim.fn.jobstart({ exePath, conv_id or "default" }, {
+--     stdout_buffered = true,
+--     on_stdout = function(_, data, _)
+--       if data and #data > 0 then
+--         local history = vim.fn.json_decode(table.concat(data))
+--         populate_chat_buffer(history)
+--       end
+--     end,
+--   })
+-- end
+--
+-- local function create_chat_window()
+--   load_conversation_history(conv_id)
+--   -- Create buffer if it doesn't exist
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     chat_buf = vim.api.nvim_create_buf(false, true)
+--     vim.api.nvim_buf_set_option(chat_buf, "buftype", "nofile")
+--     vim.api.nvim_buf_set_option(chat_buf, "swapfile", false)
+--     vim.api.nvim_buf_set_option(chat_buf, "modified", false)
+--     vim.api.nvim_buf_set_name(chat_buf, "AI Chat")
+--     vim.api.nvim_buf_set_option(chat_buf, "filetype", "markdown")
+--
+--     -- Initial content
+--     vim.api.nvim_buf_set_lines(chat_buf, 0, -1, false, {
+--       "# AI Chat",
+--       "",
+--       "Type your message below, then use <leader>as to send to AI",
+--       "",
+--       "---",
+--       "",
+--     })
+--   end
+--
+--   -- Window dimensions
+--   local width = math.floor(vim.o.columns * 0.8)
+--   local height = math.floor(vim.o.lines * 0.8)
+--
+--   -- Create floating window
+--   chat_win = vim.api.nvim_open_win(chat_buf, true, {
+--     relative = "editor",
+--     width = width,
+--     height = height,
+--     row = math.floor((vim.o.lines - height) / 2),
+--     col = math.floor((vim.o.columns - width) / 2),
+--     style = "minimal",
+--     border = "rounded",
+--     title = " AI Chat ",
+--   })
+--
+--   -- Set up keymaps for the chat window
+--   local opts = { buffer = chat_buf, silent = true }
+--   vim.keymap.set("n", "q", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--   vim.keymap.set("n", "<Esc>", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--
+--   -- Go to end of buffer in insert mode
+--   local line_count = vim.api.nvim_buf_line_count(chat_buf)
+--   vim.api.nvim_win_set_cursor(chat_win, { line_count, 0 })
+--   vim.cmd("startinsert!")
+--
+--   return chat_buf, chat_win
+-- end
+--
+-- local function get_last_user_message()
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return ""
+--   end
+--
+--   local lines = vim.api.nvim_buf_get_lines(chat_buf, 0, -1, false)
+--   local user_message = {}
+--   local last_separator_index = 0
+--
+--   -- Find the last separator
+--   for i = #lines, 1, -1 do
+--     if lines[i] == "---" then
+--       last_separator_index = i
+--       break
+--     end
+--   end
+--
+--   -- Get everything after the last separator
+--   for i = last_separator_index + 1, #lines do
+--     if lines[i]:match("^%*%*AI Response:%*%*") then
+--       break -- Stop if we hit an AI response
+--     end
+--     if lines[i] ~= "" or #user_message > 0 then -- Skip leading empty lines
+--       table.insert(user_message, lines[i])
+--     end
+--   end
+--
+--   -- Remove trailing empty lines
+--   while #user_message > 0 and user_message[#user_message] == "" do
+--     table.remove(user_message, #user_message)
+--   end
+--
+--   return table.concat(user_message, "\n")
+-- end
+--
+-- function M.send_to_ai()
+--   start_time = vim.loop.hrtime()
+--   print("Starting send_to_ai at:", start_time)
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     vim.notify("No chat window open", vim.log.levels.WARN)
+--     return
+--   end
+--
+--   -- Get only the last user message
+--   local user_message = get_last_user_message()
+--
+--   if user_message == "" then
+--     vim.notify("No user message found", vim.log.levels.WARN)
+--     return
+--   end
+--
+--   -- Start AI process if needed
+--   local job_id = start_ai_process()
+--   if not job_id then
+--     vim.notify("Failed to start AI process", vim.log.levels.ERROR)
+--     return
+--   end
+--
+--   -- Add "thinking" indicator
+--   local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--   vim.api.nvim_buf_set_lines(chat_buf, current_lines, current_lines, false, {
+--     "",
+--     "🤖 *Thinking...*",
+--     "",
+--   })
+--
+--   -- Send message to the running process
+--   send_time = vim.loop.hrtime()
+--   print("Sending message at:", send_time, "elapsed:", (send_time - start_time) / 1e6, "ms")
+--   vim.fn.chansend(job_id, user_message .. "\nEND_MESSAGE\n")
+-- end
+--
+-- function M.toggle_chat()
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     vim.api.nvim_win_close(chat_win, true)
+--   else
+--     create_chat_window()
+--   end
+-- end
+--
+-- -- Commands
+-- vim.api.nvim_create_user_command("AiSend", M.send_to_ai, {})
+-- vim.api.nvim_create_user_command("AiToggle", M.toggle_chat, {})
+--
+-- -- Keymaps
+-- vim.keymap.set("n", "<leader>at", M.toggle_chat, { desc = "Toggle AI chat" })
+-- vim.keymap.set("n", "<leader>as", M.send_to_ai, { desc = "Send to AI" })
+--
+-- return M
+-- local M = {}
+--
+-- -- Store chat state
+-- local chat_buf = nil
+-- local chat_win = nil
+--
+-- local function create_chat_window()
+--   -- Create buffer if it doesn't exist
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     chat_buf = vim.api.nvim_create_buf(false, true)
+--     vim.api.nvim_buf_set_option(chat_buf, "buftype", "nofile") -- Changed from 'acwrite'
+--     vim.api.nvim_buf_set_option(chat_buf, "swapfile", false)
+--     vim.api.nvim_buf_set_option(chat_buf, "modified", false) -- Add this
+--     vim.api.nvim_buf_set_name(chat_buf, "AI Chat")
+--     vim.api.nvim_buf_set_option(chat_buf, "filetype", "markdown")
+--
+--     -- Initial content
+--     vim.api.nvim_buf_set_lines(chat_buf, 0, -1, false, {
+--       "# AI Chat",
+--       "",
+--       "Type your message below, then use <leader>as to send to AI",
+--       "",
+--       "---",
+--       "",
+--     })
+--   end
+--
+--   -- Window dimensions
+--   local width = math.floor(vim.o.columns * 0.8)
+--   local height = math.floor(vim.o.lines * 0.8)
+--
+--   -- Create floating window
+--   chat_win = vim.api.nvim_open_win(chat_buf, true, {
+--     relative = "editor",
+--     width = width,
+--     height = height,
+--     row = math.floor((vim.o.lines - height) / 2),
+--     col = math.floor((vim.o.columns - width) / 2),
+--     style = "minimal",
+--     border = "rounded",
+--     title = " AI Chat ",
+--   })
+--
+--   -- Set up keymaps for the chat window
+--   local opts = { buffer = chat_buf, silent = true }
+--   vim.keymap.set("n", "q", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--   vim.keymap.set("n", "<Esc>", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--
+--   -- Go to end of buffer in insert mode
+--   local line_count = vim.api.nvim_buf_line_count(chat_buf)
+--   vim.api.nvim_win_set_cursor(chat_win, { line_count, 0 })
+--   vim.cmd("startinsert!")
+--
+--   return chat_buf, chat_win
+-- end
+--
+-- local function get_last_user_message()
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return ""
+--   end
+--
+--   local lines = vim.api.nvim_buf_get_lines(chat_buf, 0, -1, false)
+--   local user_message = {}
+--   local in_user_section = false
+--   local last_separator_index = 0
+--
+--   -- Find the last separator
+--   for i = #lines, 1, -1 do
+--     if lines[i] == "---" then
+--       last_separator_index = i
+--       break
+--     end
+--   end
+--
+--   -- Get everything after the last separator
+--   for i = last_separator_index + 1, #lines do
+--     if lines[i]:match("^%*%*AI Response:%*%*") then
+--       break -- Stop if we hit an AI response
+--     end
+--     if lines[i] ~= "" or #user_message > 0 then -- Skip leading empty lines
+--       table.insert(user_message, lines[i])
+--     end
+--   end
+--
+--   -- Remove trailing empty lines
+--   while #user_message > 0 and user_message[#user_message] == "" do
+--     table.remove(user_message, #user_message)
+--   end
+--
+--   return table.concat(user_message, "\n")
+-- end
+--
+-- local function add_separator_and_response(response_lines)
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return
+--   end
+--
+--   local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--   local content = {}
+--
+--   -- Add separator and AI response
+--   table.insert(content, "")
+--   table.insert(content, "**AI Response:**")
+--   table.insert(content, "")
+--
+--   -- Add response
+--   for _, line in ipairs(response_lines) do
+--     table.insert(content, line)
+--   end
+--
+--   -- Add separator for next message
+--   table.insert(content, "")
+--   table.insert(content, "---")
+--   table.insert(content, "")
+--
+--   vim.api.nvim_buf_set_lines(chat_buf, current_lines, current_lines, false, content)
+--
+--   -- Scroll to bottom if window is open
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     local new_line_count = vim.api.nvim_buf_line_count(chat_buf)
+--     vim.api.nvim_win_set_cursor(chat_win, { new_line_count, 0 })
+--   end
+-- end
+--
+-- function M.send_to_ai()
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     vim.notify("No chat window open", vim.log.levels.WARN)
+--     return
+--   end
+--
+--   -- Get only the last user message
+--   local user_message = get_last_user_message()
+--
+--   if user_message == "" then
+--     vim.notify("No user message found", vim.log.levels.WARN)
+--     return
+--   end
+--
+--   -- Add "thinking" indicator
+--   local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--   vim.api.nvim_buf_set_lines(chat_buf, current_lines, current_lines, false, {
+--     "",
+--     "🤖 *Thinking...*",
+--     "",
+--   })
+--
+--   vim.system({ "dotnet", "run", "--project", "/home/mirco/projects/lua-test/lua/lua.csproj" }, {
+--     stdin = user_message,
+--     text = true,
+--   }, function(result)
+--     vim.schedule(function()
+--       if result.code == 0 then
+--         -- Remove the "thinking" lines
+--         local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--         vim.api.nvim_buf_set_lines(chat_buf, current_lines - 3, current_lines, false, {})
+--
+--         -- Add AI response
+--         local response_lines = vim.split(result.stdout, "\n")
+--         if response_lines[#response_lines] == "" then
+--           table.remove(response_lines, #response_lines)
+--         end
+--         add_separator_and_response(response_lines)
+--       else
+--         vim.notify("Error: " .. result.stderr, vim.log.levels.ERROR)
+--       end
+--     end)
+--   end)
+-- end
+--
+-- function M.toggle_chat()
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     vim.api.nvim_win_close(chat_win, true)
+--   else
+--     create_chat_window()
+--   end
+-- end
+--
+-- -- Commands
+-- vim.api.nvim_create_user_command("AiSend", M.send_to_ai, {})
+-- vim.api.nvim_create_user_command("AiToggle", M.toggle_chat, {})
+--
+-- -- Keymaps
+-- vim.keymap.set("n", "<leader>at", M.toggle_chat, { desc = "Toggle AI chat" })
+-- vim.keymap.set("n", "<leader>as", M.send_to_ai, { desc = "Send to AI" })
+--
+-- return M
+-- local M = {}
+--
+-- -- Store chat state
+-- local chat_buf = nil
+-- local chat_win = nil
+--
+-- local function create_chat_window()
+--   -- Create buffer if it doesn't exist
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     chat_buf = vim.api.nvim_create_buf(false, true)
+--     vim.api.nvim_buf_set_option(chat_buf, "buftype", "acwrite")
+--     vim.api.nvim_buf_set_option(chat_buf, "swapfile", false)
+--     vim.api.nvim_buf_set_name(chat_buf, "AI Chat")
+--     vim.api.nvim_buf_set_option(chat_buf, "filetype", "markdown")
+--
+--     -- Initial content
+--     vim.api.nvim_buf_set_lines(chat_buf, 0, -1, false, {
+--       "# AI Chat",
+--       "",
+--       "Type your message below, then use <leader>as to send to AI",
+--       "",
+--       "---",
+--       "",
+--     })
+--   end
+--
+--   -- Window dimensions
+--   local width = math.floor(vim.o.columns * 0.8)
+--   local height = math.floor(vim.o.lines * 0.8)
+--
+--   -- Create floating window
+--   chat_win = vim.api.nvim_open_win(chat_buf, true, {
+--     relative = "editor",
+--     width = width,
+--     height = height,
+--     row = math.floor((vim.o.lines - height) / 2),
+--     col = math.floor((vim.o.columns - width) / 2),
+--     style = "minimal",
+--     border = "rounded",
+--     title = " AI Chat ",
+--   })
+--
+--   -- Set up keymaps for the chat window
+--   local opts = { buffer = chat_buf, silent = true }
+--   vim.keymap.set("n", "q", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--   vim.keymap.set("n", "<Esc>", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--
+--   -- Go to end of buffer in insert mode
+--   local line_count = vim.api.nvim_buf_line_count(chat_buf)
+--   vim.api.nvim_win_set_cursor(chat_win, { line_count, 0 })
+--   vim.cmd("startinsert!")
+--
+--   return chat_buf, chat_win
+-- end
+--
+-- local function add_separator_and_response(response_lines)
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return
+--   end
+--
+--   local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--   local content = {}
+--
+--   -- Add separator
+--   table.insert(content, "")
+--   table.insert(content, "---")
+--   table.insert(content, "")
+--   table.insert(content, "**AI Response:**")
+--   table.insert(content, "")
+--
+--   -- Add response
+--   for _, line in ipairs(response_lines) do
+--     table.insert(content, line)
+--   end
+--
+--   -- Add separator for next message
+--   table.insert(content, "")
+--   table.insert(content, "---")
+--   table.insert(content, "")
+--
+--   vim.api.nvim_buf_set_lines(chat_buf, current_lines, current_lines, false, content)
+--
+--   -- Scroll to bottom if window is open
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     local new_line_count = vim.api.nvim_buf_line_count(chat_buf)
+--     vim.api.nvim_win_set_cursor(chat_win, { new_line_count, 0 })
+--   end
+-- end
+--
+-- function M.send_to_ai()
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     vim.notify("No chat window open", vim.log.levels.WARN)
+--     return
+--   end
+--
+--   -- Get all buffer content
+--   local lines = vim.api.nvim_buf_get_lines(chat_buf, 0, -1, false)
+--   local input = table.concat(lines, "\n")
+--
+--   -- Add "thinking" indicator
+--   local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--   vim.api.nvim_buf_set_lines(chat_buf, current_lines, current_lines, false, {
+--     "",
+--     "🤖 *Thinking...*",
+--     "",
+--   })
+--
+--   vim.system({ "dotnet", "run", "--project", "/home/mirco/projects/lua-test/lua/lua.csproj" }, {
+--     stdin = input,
+--     text = true,
+--   }, function(result)
+--     vim.schedule(function()
+--       if result.code == 0 then
+--         -- Remove the "thinking" lines
+--         local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--         vim.api.nvim_buf_set_lines(chat_buf, current_lines - 3, current_lines, false, {})
+--
+--         -- Add AI response
+--         local response_lines = vim.split(result.stdout, "\n")
+--         if response_lines[#response_lines] == "" then
+--           table.remove(response_lines, #response_lines)
+--         end
+--         add_separator_and_response(response_lines)
+--       else
+--         vim.notify("Error: " .. result.stderr, vim.log.levels.ERROR)
+--       end
+--     end)
+--   end)
+-- end
+--
+-- function M.toggle_chat()
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     vim.api.nvim_win_close(chat_win, true)
+--   else
+--     create_chat_window()
+--   end
+-- end
+--
+-- -- Commands
+-- vim.api.nvim_create_user_command("AiSend", M.send_to_ai, {})
+-- vim.api.nvim_create_user_command("AiToggle", M.toggle_chat, {})
+--
+-- -- Keymaps
+-- vim.keymap.set("n", "<leader>at", M.toggle_chat, { desc = "Toggle AI chat" })
+-- vim.keymap.set("n", "<leader>as", M.send_to_ai, { desc = "Send to AI" })
+--
+-- return M
+-- local M = {}
+--
+-- -- Store chat state
+-- local chat_buf = nil
+-- local chat_win = nil
+--
+-- local function create_chat_window()
+--   -- Create buffer if it doesn't exist
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     chat_buf = vim.api.nvim_create_buf(false, true)
+--     vim.api.nvim_buf_set_option(chat_buf, "buftype", "nofile")
+--     vim.api.nvim_buf_set_option(chat_buf, "swapfile", false)
+--     vim.api.nvim_buf_set_name(chat_buf, "AI Chat")
+--   end
+--
+--   -- Window dimensions
+--   local width = math.floor(vim.o.columns * 0.8)
+--   local height = math.floor(vim.o.lines * 0.8)
+--
+--   -- Create floating window
+--   chat_win = vim.api.nvim_open_win(chat_buf, true, {
+--     relative = "editor",
+--     width = width,
+--     height = height,
+--     row = math.floor((vim.o.lines - height) / 2),
+--     col = math.floor((vim.o.columns - width) / 2),
+--     style = "minimal",
+--     border = "rounded",
+--     title = " AI Chat ",
+--   })
+--
+--   -- Set up keymaps for the chat window
+--   local opts = { buffer = chat_buf, silent = true }
+--   vim.keymap.set("n", "q", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--   vim.keymap.set("n", "<Esc>", function()
+--     vim.api.nvim_win_close(chat_win, true)
+--   end, opts)
+--
+--   return chat_buf, chat_win
+-- end
+--
+-- local function append_to_chat(lines, prefix)
+--   if not chat_buf or not vim.api.nvim_buf_is_valid(chat_buf) then
+--     return
+--   end
+--
+--   local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--   local content = {}
+--
+--   -- Add prefix and content
+--   table.insert(content, prefix)
+--   for _, line in ipairs(lines) do
+--     table.insert(content, line)
+--   end
+--   table.insert(content, "") -- Empty line for spacing
+--
+--   vim.api.nvim_buf_set_lines(chat_buf, current_lines, current_lines, false, content)
+--
+--   -- Scroll to bottom if window is open
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     local new_line_count = vim.api.nvim_buf_line_count(chat_buf)
+--     vim.api.nvim_win_set_cursor(chat_win, { new_line_count, 0 })
+--   end
+-- end
+--
+-- function M.send_to_ai()
+--   -- Get current buffer content or selection
+--   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+--   local input = table.concat(lines, "\n")
+--
+--   -- Create or show chat window
+--   create_chat_window()
+--
+--   -- Add user message to chat
+--   append_to_chat(lines, "🧑 User:")
+--
+--   -- Add "thinking" indicator
+--   append_to_chat({ "Thinking..." }, "🤖 AI:")
+--
+--   vim.system({ "dotnet", "run", "--project", "/home/mirco/projects/lua-test/lua/lua.csproj" }, {
+--     stdin = input,
+--     text = true,
+--   }, function(result)
+--     vim.schedule(function()
+--       if result.code == 0 then
+--         -- Remove the "thinking" line
+--         local current_lines = vim.api.nvim_buf_line_count(chat_buf)
+--         vim.api.nvim_buf_set_lines(chat_buf, current_lines - 2, current_lines, false, {})
+--
+--         -- Add AI response
+--         local response_lines = vim.split(result.stdout, "\n")
+--         if response_lines[#response_lines] == "" then
+--           table.remove(response_lines, #response_lines)
+--         end
+--         append_to_chat(response_lines, "🤖 AI:")
+--       else
+--         vim.notify("Error: " .. result.stderr, vim.log.levels.ERROR)
+--       end
+--     end)
+--   end)
+-- end
+--
+-- function M.toggle_chat()
+--   if chat_win and vim.api.nvim_win_is_valid(chat_win) then
+--     vim.api.nvim_win_close(chat_win, true)
+--   else
+--     create_chat_window()
+--   end
+-- end
+--
+-- -- Commands
+-- vim.api.nvim_create_user_command("AiChat", M.send_to_ai, {})
+-- vim.api.nvim_create_user_command("AiToggle", M.toggle_chat, {})
+--
+-- -- Keymaps
+-- vim.keymap.set("n", "<leader>ai", M.send_to_ai, { desc = "Send to AI" })
+-- vim.keymap.set("n", "<leader>at", M.toggle_chat, { desc = "Toggle AI chat" })
+--
+-- return M
+-- local M = {}
+--
+-- function M.process_buffer()
+--   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+--   local input = table.concat(lines, "\n")
+--
+--   vim.system({ "dotnet", "run", "--project", "/home/mirco/projects/lua-test/lua/lua.csproj" }, {
+--     stdin = input,
+--     text = true,
+--   }, function(result)
+--     vim.schedule(function()
+--       if result.code == 0 then
+--         local output_lines = vim.split(result.stdout, "\n")
+--         -- Remove empty last line if it exists
+--         if output_lines[#output_lines] == "" then
+--           table.remove(output_lines, #output_lines)
+--         end
+--         vim.api.nvim_buf_set_lines(0, 0, -1, false, output_lines)
+--       else
+--         vim.notify("Error: " .. result.stderr, vim.log.levels.ERROR)
+--       end
+--     end)
+--   end)
+-- end
+--
+-- -- Create user command
+-- vim.api.nvim_create_user_command("ProcessBuffer", M.process_buffer, {})
+--
+-- -- Optional: Add keymap
+-- -- vim.keymap.set("n", "<leader>pb", M.process_buffer, { desc = "Process buffer with external tool" })
+--
+-- return M
