@@ -124,7 +124,6 @@ return {
       keymap = {
         ["<Tab>"] = { "accept", "fallback" },
         ["<CR>"] = { "accept", "fallback" },
-        ["."] = { "accept", "fallback" },
       },
     },
   },
@@ -176,7 +175,7 @@ return {
     opts = {
       formatters_by_ft = {
         -- cs = { "csharpier" },
-        -- cs = { "csharpier" },
+        cs = { "roslyn" },
       },
     },
   },
@@ -193,7 +192,7 @@ return {
         "lua-language-server",
 
         "xmlformatter",
-        "csharpier",
+        -- "csharpier",
         "prettier",
 
         "stylua",
