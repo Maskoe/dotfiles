@@ -47,6 +47,24 @@ return {
       -- },
     },
   },
+  {
+    "nvim-mini/mini.pairs",
+    opts = {
+      modes = { insert = true, command = true, terminal = false },
+      -- skip autopair when next character is one of these
+      skip_next = [=[[%w%%%'%[%.%$]]=],
+      -- skip autopair when the cursor is inside these treesitter nodes
+      skip_ts = { "" },
+      -- skip autopair when next character is closing pair
+      -- and there are more closing pairs than opening pairs
+      skip_unbalanced = true,
+      -- better deal with markdown code blocks
+      markdown = true,
+    },
+    config = function(_, opts)
+      LazyVim.mini.pairs(opts)
+    end,
+  },
 
   -- No im pretty sure its this one that stps the dumb autocompletion in .cuade files
   {
@@ -106,6 +124,7 @@ return {
       keymap = {
         ["<Tab>"] = { "accept", "fallback" },
         ["<CR>"] = { "accept", "fallback" },
+        ["."] = { "accept", "fallback" },
       },
     },
   },
@@ -157,7 +176,7 @@ return {
     opts = {
       formatters_by_ft = {
         -- cs = { "csharpier" },
-        cs = { "csharpier" },
+        -- cs = { "csharpier" },
       },
     },
   },

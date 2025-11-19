@@ -17,6 +17,26 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- Default to inside motions
+vim.keymap.set("o", "{", "i{") -- operator-pending mode
+vim.keymap.set("o", '"', 'i"')
+vim.keymap.set("o", "'", "i'")
+vim.keymap.set("o", "(", "i(")
+vim.keymap.set("o", "[", "i[")
+vim.keymap.set("o", "<", "i[")
+
+-- Visual mode inside motions
+vim.keymap.set("v", '"', 'i"')
+vim.keymap.set("v", "'", "i'")
+vim.keymap.set("v", "(", "i(")
+vim.keymap.set("v", "[", "i[")
+vim.keymap.set("v", "{", "i{")
+vim.keymap.set("v", "<", "i<")
+
+vim.keymap.set({ "n", "v" }, ",", "<nop>")
+-- vim.keymap.set("n", "c{", "ci{", { nowait = true })
+-- vim.keymap.set("n", "c}", "ci}", { nowait = true })
+
 for _, cool in ipairs({ "n", "v" }) do
   vim.keymap.set(cool, "i", "<Up>", { noremap = true, silent = true })
   vim.keymap.set(cool, "k", "<Down>", { noremap = true, silent = true })
@@ -130,32 +150,6 @@ for _, op in ipairs(operators) do
     vim.keymap.set("o", op .. delim, op .. delim)
   end
 end
-
--- Visual mode inside motions
-vim.keymap.set("v", '"', 'i"')
-vim.keymap.set("v", "'", "i'")
-vim.keymap.set("v", "(", "i(")
-vim.keymap.set("v", "[", "i[")
-vim.keymap.set("v", "{", "i{")
-
--- Shorthand for inside operations
-local actions = { "y", "d", "c" }
-local inside_mappings = {
-  ['"'] = '"',
-  ["'"] = "'",
-  ["("] = "(",
-  ["["] = "[",
-  ["{"] = "{",
-}
-
-for _, action in ipairs(actions) do
-  for key, delim in pairs(inside_mappings) do
-    vim.keymap.set("n", action .. key, action .. "i" .. delim)
-  end
-end
-
--- Timeout setting
--- vim.opt.timeoutlen = 300
 
 -- ERROR NAVIGATION via leader xe and nN
 
