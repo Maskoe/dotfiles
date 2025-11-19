@@ -17,6 +17,20 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+local ls = require("luasnip")
+
+vim.keymap.set({ "i", "s" }, "<C-PageDown>", function()
+  if ls.expand_or_jumpable() then
+    ls.expand_or_jump()
+  end
+end, { silent = true })
+
+vim.keymap.set({ "i", "s" }, "<C-PageUp>", function()
+  if ls.jumpable(-1) then
+    ls.jump(-1)
+  end
+end, { silent = true })
+
 -- Default to inside motions
 vim.keymap.set("o", "{", "i{") -- operator-pending mode
 vim.keymap.set("o", '"', 'i"')
