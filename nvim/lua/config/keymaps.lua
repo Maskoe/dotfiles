@@ -108,7 +108,7 @@ vim.keymap.set("n", "<A-k>", "<cmd>m .+1<CR>==", { desc = "Move line down" })
 -- Move visual selection up/down
 vim.keymap.set("x", "<A-i>", ":m '<-2<CR>gv=gv", { desc = "Move selection up", silent = true })
 vim.keymap.set("x", "<A-k>", ":m '>+1<CR>gv=gv", { desc = "Move selection down", silent = true })
-vim.keymap.set("n", "<leader>space", "<leader>fF", { desc = "Default space space to search real root directory" })
+vim.keymap.set("n", "<leader><space>", "<cmd>Telescope find_files<cr>", { desc = "Find files from root directory" })
 
 vim.keymap.set({ "n", "v" }, "<C-u>", "<C-i>", { desc = "Jump forward" })
 vim.keymap.set("n", "<leader>bc", 'ggVG"_dO<Esc>i', { desc = "Clear buffer" })

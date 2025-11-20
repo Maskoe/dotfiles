@@ -33,7 +33,7 @@
 -- vim.lsp.config("roslyn", {})
 vim.lsp.config("roslyn", {
   on_attach = function()
-    print("This will run when the server attaches!")
+    -- print("This will run when the server attaches!")
     vim.lsp.inlay_hint.enable(false)
   end,
   settings = {

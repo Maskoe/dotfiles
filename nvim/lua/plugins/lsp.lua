@@ -6,9 +6,10 @@ return {
     opts = {
       -- no effect
       diagnostics = {
-        virtual_text = {
-          current_line = true,
-        },
+        virtual_text = false,
+        -- virtual_text = {
+        --   current_line = true,
+        -- },
       },
       inlay_hints = {
         enabled = false,
@@ -47,6 +48,13 @@ return {
       -- },
     },
   },
+
+  {
+    "rachartier/tiny-inline-diagnostic.nvim",
+    event = "VeryLazy",
+    priority = 1000,
+    opts = {},
+  },
   {
     "nvim-mini/mini.pairs",
     opts = {
@@ -71,6 +79,9 @@ return {
     "saghen/blink.cmp",
     -- enabled = false,
     opts = {
+      snippets = {
+        preset = "luasnip",
+      },
       sources = {
         providers = {
           lsp = {
@@ -124,6 +135,39 @@ return {
       keymap = {
         ["<Tab>"] = { "accept", "fallback" },
         ["<CR>"] = { "accept", "fallback" },
+        ["."] = {
+          function(cmp)
+            local item = require("blink.cmp.completion.list").get_selected_item()
+            if item then
+              local kinds = require("blink.cmp.types").CompletionItemKind
+              if
+                vim.tbl_contains({ kinds.Variable, kinds.Property, kinds.Enum, kinds.Keyword, kinds.Field }, item.kind)
+              then
+                cmp.select_and_accept()
+
+                vim.schedule(function()
+                  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+                  local new_pos = { cursor_pos[1], cursor_pos[2] + 1 }
+                  vim.api.nvim_buf_set_text(
+                    0,
+                    cursor_pos[1] - 1,
+                    cursor_pos[2],
+                    cursor_pos[1] - 1,
+                    cursor_pos[2],
+                    { "." }
+                  )
+                  vim.api.nvim_win_set_cursor(0, new_pos)
+                  cmp.show()
+                end)
+
+                return true
+              end
+            end
+            return false
+          end,
+          "accept",
+          "fallback",
+        },
       },
     },
   },
