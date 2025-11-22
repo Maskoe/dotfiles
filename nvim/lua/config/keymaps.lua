@@ -3,8 +3,8 @@
 -- Add any additional keymaps here
 
 -- giga smart, this fixes my movement in visual mode when im going up
-vim.keymap.set("v", "ii", "2<Up>", { noremap = true })
-vim.keymap.set("v", "q", 'i"', { noremap = true })
+-- vim.keymap.set("x", "ii", "2<Up>", { noremap = true })
+vim.keymap.set("x", "q", 'i"', { noremap = true })
 
 -- Hide bottom window, whatever it is
 vim.keymap.set("n", "<leader>wb", "<C-w>j<C-w>c", { desc = "Close bottom window" })
@@ -16,6 +16,13 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.keymap.set("n", "<leader>S", "vap<Plug>(DBUI_ExecuteQuery)", { buffer = true })
   end,
 })
+
+-- Stop     Stop Stop
+-- vim.keymap.set("v", "p", '"_dP', { silent = true })
+
+vim.keymap.set("x", "p", function()
+  return '"_d"' .. vim.v.register .. "P"
+end, { expr = true, silent = true })
 
 local ls = require("luasnip")
 
@@ -40,58 +47,52 @@ vim.keymap.set("o", "[", "i[")
 vim.keymap.set("o", "<", "i[")
 
 -- Visual mode inside motions
-vim.keymap.set("v", '"', 'i"')
-vim.keymap.set("v", "'", "i'")
-vim.keymap.set("v", "(", "i(")
-vim.keymap.set("v", "[", "i[")
-vim.keymap.set("v", "{", "i{")
-vim.keymap.set("v", "<", "i<")
+vim.keymap.set("x", '"', 'i"')
+vim.keymap.set("x", "'", "i'")
+vim.keymap.set("x", "(", "i(")
+vim.keymap.set("x", "[", "i[")
+vim.keymap.set("x", "{", "i{")
+vim.keymap.set("x", "<", "i<")
 
 vim.keymap.set({ "n", "v" }, ",", "<nop>")
 -- vim.keymap.set("n", "c{", "ci{", { nowait = true })
 -- vim.keymap.set("n", "c}", "ci}", { nowait = true })
 
-for _, cool in ipairs({ "n", "v" }) do
-  vim.keymap.set(cool, "i", "<Up>", { noremap = true, silent = true })
-  vim.keymap.set(cool, "k", "<Down>", { noremap = true, silent = true })
-  vim.keymap.set(cool, "j", "<Left>", { noremap = true, silent = true })
-  vim.keymap.set(cool, "l", "<Right>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "x" }, "i", "<Up>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "x" }, "k", "<Down>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "x" }, "j", "<Left>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "x" }, "l", "<Right>", { noremap = true, silent = true })
 
-  vim.keymap.set(cool, "I", "7<Up>", { noremap = true, silent = true })
-  vim.keymap.set(cool, "K", "7<Down>", { noremap = true, silent = true })
-  vim.keymap.set(cool, "J", "^", { noremap = true, silent = true })
-  vim.keymap.set(cool, "L", "$", { noremap = true, silent = true })
+vim.keymap.set({ "n", "x" }, "<C-y>", "<C-a>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "x" }, "<C-h>", "<C-x>", { noremap = true, silent = true })
 
-  vim.keymap.set(cool, "<C-y>", "<C-a>", { noremap = true, silent = true })
-  vim.keymap.set(cool, "<C-h>", "<C-x>", { noremap = true, silent = true })
+vim.keymap.set({ "n", "x" }, ";", ":", { noremap = true })
+vim.keymap.set({ "n", "x" }, ":", ";", { noremap = true })
 
-  vim.keymap.set("n", "gh", function()
-    vim.lsp.buf.hover()
-  end, { noremap = true, silent = true })
+vim.keymap.set("n", "gh", function()
+  vim.lsp.buf.hover()
+end, { noremap = true, silent = true })
 
-  vim.keymap.set("n", "<C-PageDown>", ":bnext<CR>", { noremap = true, silent = true })
-  vim.keymap.set("n", "<C-PageUp>", ":bprevious<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<C-PageDown>", ":bnext<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<C-PageUp>", ":bprevious<CR>", { noremap = true, silent = true })
 
-  vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { noremap = true, silent = true })
+vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { noremap = true, silent = true })
 
-  -- Make it easier to exit terminal mode
-  vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
-  vim.keymap.set("t", "<C-i>", "<C-\\><C-n><C-w>k", { desc = "Terminal: Move up" })
-  vim.keymap.set("t", "<C-k>", "<C-\\><C-n><C-w>j", { desc = "Terminal: Move down" })
-  vim.keymap.set("t", "<C-j>", "<C-\\><C-n><C-w>h", { desc = "Terminal: Move left" })
-  vim.keymap.set("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Terminal: Move right" })
-  -- Window navigation from any mode
-  vim.keymap.set({ "n" }, "<C-i>", "<C-w>k", { desc = "Move to window above" })
-  vim.keymap.set({ "n" }, "<C-k>", "<C-w>j", { desc = "Move to window below" })
-  vim.keymap.set({ "n" }, "<C-j>", "<C-w>h", { desc = "Move to window left" })
-  vim.keymap.set({ "n" }, "<C-l>", "<C-w>l", { desc = "Move to window right" })
+-- Make it easier to exit terminal mode
+vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+vim.keymap.set("t", "<C-i>", "<C-\\><C-n><C-w>k", { desc = "Terminal: Move up" })
+vim.keymap.set("t", "<C-k>", "<C-\\><C-n><C-w>j", { desc = "Terminal: Move down" })
+vim.keymap.set("t", "<C-j>", "<C-\\><C-n><C-w>h", { desc = "Terminal: Move left" })
+vim.keymap.set("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Terminal: Move right" })
+-- Window navigation from any mode
+vim.keymap.set({ "n" }, "<C-i>", "<C-w>k", { desc = "Move to window above" })
+vim.keymap.set({ "n" }, "<C-k>", "<C-w>j", { desc = "Move to window below" })
+vim.keymap.set({ "n" }, "<C-j>", "<C-w>h", { desc = "Move to window left" })
+vim.keymap.set({ "n" }, "<C-l>", "<C-w>l", { desc = "Move to window right" })
 
-  vim.keymap.set("n", "<leader>cw", ":let @+ = getcwd()<CR>", { desc = "Copy cwd to clipboard" })
-  vim.keymap.set(cool, ";", ":", { noremap = true })
-  vim.keymap.set(cool, ":", ";", { noremap = true })
+vim.keymap.set("n", "<leader>cw", ":let @+ = getcwd()<CR>", { desc = "Copy cwd to clipboard" })
 
-  vim.keymap.set("n", "<C-n>", "J", { desc = "Join lines" })
-end
+vim.keymap.set("n", "<C-n>", "J", { desc = "Join lines" })
 
 vim.keymap.set("n", "<leader>;", "A;<Esc>", { desc = "Add semicolon to end of line" })
 vim.keymap.set("n", "f", "<Nop>", { desc = "Search with s instead" })
@@ -112,7 +113,7 @@ vim.keymap.set("n", "<leader><space>", "<cmd>Telescope find_files<cr>", { desc =
 
 vim.keymap.set({ "n", "v" }, "<C-u>", "<C-i>", { desc = "Jump forward" })
 vim.keymap.set("n", "<leader>bc", 'ggVG"_dO<Esc>i', { desc = "Clear buffer" })
-vim.keymap.set("x", "p", [["_dP]], { desc = "Paste without yanking" })
+-- vim.keymap.set("x", "p", [["_dP]], { desc = "Paste without yanking" })
 
 vim.keymap.set("n", "<leader>MA", ":normal! mA<CR>", { desc = "Set mark A" })
 vim.keymap.set("n", "<leader>ma", ":normal! 'A<CR>", { desc = "Go to mark A" })
@@ -145,15 +146,14 @@ vim.keymap.set("n", "<leader>xs", ":BuildApi<CR>", { desc = "Show build errors" 
 vim.keymap.set({ "n", "v" }, "<C-->", "J")
 
 -- Extreme horizontal and vertical moving
-vim.keymap.set({ "n", "v" }, "J", "^")
-vim.keymap.set({ "n", "v" }, "H", "^")
-vim.keymap.set({ "n", "v" }, "L", "$")
+vim.keymap.set({ "n", "x" }, "J", "^")
+vim.keymap.set({ "n", "x" }, "L", "$")
 
-vim.keymap.set({ "n", "v" }, "I", "7k")
-vim.keymap.set({ "n", "v" }, "K", "7j")
+vim.keymap.set({ "n", "x" }, "I", "7k")
+vim.keymap.set({ "n", "x" }, "K", "7j")
 
 -- Insert mode mapping
-vim.keymap.set({ "n", "v" }, "h", "i")
+vim.keymap.set({ "n", "x" }, "h", "i")
 
 -- Operator pending motions (keep inside motions working)
 local operators = { "i", "a" }
@@ -215,3 +215,41 @@ vim.keymap.set("n", "<leader>xe", function()
   setup_error_navigation()
   vim.diagnostic.goto_next({ severity = vim.diagnostic.severity.ERROR })
 end, { desc = "Start error navigation" })
+
+-- makes i work instantly in visual mode. The idea is to set the timeoutlen to 0 when entering visual mode.
+function Vis(vmode)
+  vim.opt.timeoutlen = 1
+  vim.defer_fn(function() end, 10)
+  return vmode
+end
+
+function ToggleTimeoutLen()
+  if vim.opt.timeoutlen:get() <= 10 then
+    vim.opt.timeoutlen = 1000 -- reset to default
+  else
+    vim.opt.timeoutlen = 10
+  end
+end
+
+-- Expression mappings for entering visual mode
+vim.keymap.set("n", "V", function()
+  vim.opt.timeoutlen = 0
+  return "V<Left><Right>"
+end, { expr = true })
+
+vim.keymap.set("n", "v", function()
+  vim.opt.timeoutlen = 0
+  return "v<Left><Right>"
+end, { expr = true })
+
+vim.keymap.set("n", "<C-v>", function()
+  return Vis("<C-v>")
+end, { expr = true })
+
+-- Autocmd to reset timeoutlen when leaving visual mode
+vim.api.nvim_create_autocmd("ModeChanged", {
+  pattern = "[vV\x16]*:[^vV\x16]*",
+  callback = function()
+    vim.opt.timeoutlen = 1000 -- reset to your preferred default
+  end,
+})

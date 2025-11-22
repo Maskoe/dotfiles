@@ -1,3 +1,30 @@
+local function in_treesitter_capture(capture)
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  if vim.api.nvim_get_mode().mode == "i" then
+    col = col - 1
+  end
+
+  local buf = vim.api.nvim_get_current_buf()
+  local get_captures_at_pos = require("vim.treesitter").get_captures_at_pos
+
+  local captures_at_cursor = vim.tbl_map(function(x)
+    return x.capture
+  end, get_captures_at_pos(buf, row - 1, col))
+
+  if vim.tbl_isempty(captures_at_cursor) then
+    return false
+  elseif type(capture) == "string" and vim.tbl_contains(captures_at_cursor, capture) then
+    return true
+  elseif type(capture) == "table" then
+    for _, v in ipairs(capture) do
+      if vim.tbl_contains(captures_at_cursor, v) then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 return {
 
   {
@@ -7,8 +34,8 @@ return {
       -- no effect
       diagnostics = {
         virtual_text = false,
-        -- virtual_text = {
-        --   current_line = true,
+        -- virtual_text = { . this.this. wow.
+        --   current_line = true, wow... this..   this. this. wh this. wh this. wh.. this.
         -- },
       },
       inlay_hints = {
@@ -74,7 +101,7 @@ return {
     end,
   },
 
-  -- No im pretty sure its this one that stps the dumb autocompletion in .cuade files
+  -- No im pretty sure its this one that stps the dumb autocompletion in .cuade files wow. this is
   {
     "saghen/blink.cmp",
     -- enabled = false,
@@ -106,8 +133,6 @@ return {
                     item.score_offset = item.score_offset - 2
                   end
                 end
-
-                -- item.label = item.label .. "  " .. item.score_offset
               end
 
               return vim.tbl_filter(function(item)
@@ -120,6 +145,9 @@ return {
       completion = {
         ghost_text = { enabled = false },
         menu = {
+          auto_show = function()
+            return not in_treesitter_capture("comment") and not require("luasnip").expand_or_jumpable()
+          end,
           draw = {
             columns = {
               { "label", "label_description", gap = 1 },
@@ -255,10 +283,36 @@ return {
     },
   },
 
-  -- little bit better inline diagnostics, but not good enough
-  -- {
-  --   "dgagn/diagflow.nvim",
-  --   -- event = 'LspAttach', This is what I use personnally and it works great
-  --   opts = {},
-  -- },
+  {
+    "gbprod/yanky.nvim",
+    event = "LazyFile",
+    opts = {
+      system_clipboard = {
+        sync_with_ring = not vim.env.SSH_CONNECTION,
+      },
+      highlight = { timer = 150 },
+    },
+    keys = {
+      {
+        "<leader>p",
+        function()
+          if LazyVim.pick.picker.name == "telescope" then
+            require("telescope").extensions.yank_history.yank_history({})
+          elseif LazyVim.pick.picker.name == "snacks" then
+            Snacks.picker.yanky()
+          else
+            vim.cmd([[YankyRingHistory]])
+          end
+        end,
+        mode = { "n", "x" },
+        desc = "Open Yank History",
+      },
+      -- Keep Yanky for normal mode
+      { "p", "<Plug>(YankyPutAfter)", mode = { "n" }, desc = "Put Text After Cursor" },
+      { "P", "<Plug>(YankyPutBefore)", mode = { "n" }, desc = "Put Text Before Cursor" },
+      -- Override for visual mode to not yank replaced text
+      { "p", '"_dP', mode = { "x" }, desc = "Put Without Yanking Replaced Text" },
+      { "P", '"_dp', mode = { "x" }, desc = "Put Before Without Yanking Replaced Text" },
+    },
+  },
 }
